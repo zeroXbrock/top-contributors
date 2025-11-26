@@ -12,13 +12,18 @@ if ! git rev-parse --git-dir >/dev/null 2>&1; then
   exit 1
 fi
 
-# Regex of authors to ignore (case-insensitive).
-# Add more with BOT_FILTER="foo|bar|baz"
-BOT_FILTER="${BOT_FILTER:-bot|\\[bot\\]|-bot|ci|actions}"
+# Built-in bot filter
+BASE_FILTER="bot|\\[bot\\]|-bot|ci|actions"
 
-# Produce list, filter out bots.
+# User-specified extra exclusions (e.g., EXCEPT="Brock|myemail@")
+if [ -n "${EXCEPT:-}" ]; then
+  FILTER="$BASE_FILTER|$EXCEPT"
+else
+  FILTER="$BASE_FILTER"
+fi
+
 list="$(git shortlog -sne --since="$SINCE" --no-merges \
-  | grep -Eiv "$BOT_FILTER")"
+  | grep -Eiv "$FILTER")"
 
 if [ -n "$TOP" ]; then
   echo "$list" | head -n "$TOP"
